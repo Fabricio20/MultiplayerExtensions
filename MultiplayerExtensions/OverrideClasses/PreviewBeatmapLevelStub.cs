@@ -22,6 +22,7 @@ namespace MultiplayerExtensions.OverrideClasses
                 {
                     if (_getBeatmap == null)
                     {
+                        Plugin.Log?.Info($"FAFA - GetBeatMap " + levelID);
                         _getBeatmap = BeatSaver.Client.Hash(levelID.Replace("custom_level_", ""));
                         _getBeatmap.ContinueWith(b =>
                         {
@@ -34,7 +35,8 @@ namespace MultiplayerExtensions.OverrideClasses
         }
         public PreviewBeatmapLevelStub(string levelId)
         {
-            levelID = levelId;    
+            levelID = levelId;
+            Plugin.Log?.Info($"FAFA - Constructor 1 " + levelId);
         }
 
         public PreviewBeatmapLevelStub(string levelId, string songName, string levelAuthorName)
@@ -42,6 +44,7 @@ namespace MultiplayerExtensions.OverrideClasses
         {
             this.songName = songName;
             this.levelAuthorName = levelAuthorName;
+            Plugin.Log?.Info($"FAFA - Constructor 2 " + levelId);
         }
 
         private void Populate(Beatmap beatmap)

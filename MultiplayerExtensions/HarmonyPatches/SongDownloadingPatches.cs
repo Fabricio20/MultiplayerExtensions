@@ -28,9 +28,9 @@ namespace MultiplayerExtensions.HarmonyPatches
 
         static bool Prefix(ref string userId, ref BeatmapIdentifierNetSerializable beatmapId, ref GameplayModifiers gameplayModifiers, ref float startTime, LobbyGameStateController __instance)
         {
-            Plugin.Log?.Debug($"LobbyGameStateController.HandleMenuRpcManagerStartedLevel");
+            Plugin.Log?.Info($"LobbyGameStateController.HandleMenuRpcManagerStartedLevel");
             if (SongCore.Loader.GetLevelById(beatmapId.levelID) != null)
-                Plugin.Log.Debug($"Level is loaded.");
+                Plugin.Log.Info($"Level is loaded.");
             LobbyGameStateController = __instance;
             LastUserId = userId;
             return true;
@@ -48,6 +48,7 @@ namespace MultiplayerExtensions.HarmonyPatches
 
         static bool Prefix(ref BeatmapIdentifierNetSerializable beatmapId, ref GameplayModifiers gameplayModifiers, ref float initialStartTime, MultiplayerLevelLoader __instance)
         {
+            Plugin.Log?.Info($"FAFA - Forced true on loadLevel");
             // Loading here doesn't work
             return true;
             MultiplayerLevelLoader = __instance;
@@ -95,11 +96,41 @@ namespace MultiplayerExtensions.HarmonyPatches
 
         private static FieldAccessor<BeatmapLevelsModel, CustomLevelLoader>.Accessor CustomLevelLoader = FieldAccessor<BeatmapLevelsModel, CustomLevelLoader>.GetAccessor("_customLevelLoader");
 
+        public static bool hasMap(string levelid)
+        {
+            foreach (KeyValuePair<string, CustomPreviewBeatmapLevel> entry in SongCore.Loader.CustomLevels)
+            {
+                // do something with entry.Value or entry.Key
+                Plugin.Log?.Info($"FAFA - " + entry.Value.levelID + " | " + entry.Value.songName + " | " + entry.Key);
+                string normalLevelId = entry.Key.Split(new[] { "CustomLevels" }, StringSplitOptions.None)[1].Replace("\\", "custom_level_");
+                if (normalLevelId.Equals(levelid))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         static bool Prefix(ref string levelID, ref CancellationToken cancellationToken, ref Task<BeatmapLevelsModel.GetBeatmapLevelResult> __result, BeatmapLevelsModel __instance)
         {
-            //return true;
-            if (!levelID.StartsWith("custom_level_") || SongCore.Loader.GetLevelById(levelID) != null)
+            Plugin.Log?.Info($"FAFA - Level ID - " + levelID);
+            if (!levelID.StartsWith("custom_level_"))
                 return true;
+            try
+            {
+                if (hasMap(levelID))
+                {
+                    Plugin.Log?.Info($"FAFA - Found Level");
+                    return true;
+                }
+            } catch (Exception)
+            {
+                Plugin.Log?.Info($"FAFA - Level not found");
+            }
+            if (SongCore.Loader.GetLevelById(levelID) != null) {
+                Plugin.Log?.Info($"FAFA - Level found by SongCore");
+                return true;
+            }
             Plugin.Log?.Info($"Attempting to download custom level...");
             TaskCompletionSource<BeatmapLevelsModel.GetBeatmapLevelResult> tcs = new TaskCompletionSource<BeatmapLevelsModel.GetBeatmapLevelResult>();
             __result = tcs.Task;
